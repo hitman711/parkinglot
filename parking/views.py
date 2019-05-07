@@ -18,7 +18,7 @@ class Login(generics.GenericAPIView):
     model_class = serializer_class.Meta.model
 
     @swagger_auto_schema(
-        operation_id="User login", 
+        operation_id="User login",
         tags=['user'],
         request_body=serializer_class,
         responses={
@@ -31,7 +31,7 @@ class Login(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-class Register(generics.GenericAPIView):
+class Register(generics.CreateAPIView):
     """ """
     authentication_classes = ()
     permission_classes = ()
@@ -50,14 +50,14 @@ class Company(
     search_fields = ('name',)
 
     @swagger_auto_schema(
-        operation_id="User company list", 
+        operation_id="User company list",
         tags=['company']
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
     @swagger_auto_schema(
-        operation_id="Create new company", 
+        operation_id="Create new company",
         tags=['company'],
         request_body=serializer_class,
         responses={
@@ -70,7 +70,7 @@ class Company(
         serializer.save(user=self.request.user)
 
 class CompanyDetail(
-    mixins.MultipleFieldLookupMixin, 
+    mixins.MultipleFieldLookupMixin,
     generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.CompanySerializer
     model_class = serializer_class.Meta.model
@@ -90,14 +90,14 @@ class LotPrice(
     prefetch_related = ()
 
     @swagger_auto_schema(
-        operation_id="Lot price list", 
+        operation_id="Lot price list",
         tags=['venue_price']
     )
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
 
     @swagger_auto_schema(
-        operation_id="Create new price", 
+        operation_id="Create new price",
         tags=['venue_price'],
         request_body=serializer_class,
         responses={
@@ -120,7 +120,7 @@ class LotPriceDetail(
     prefetch_related = ()
 
     @swagger_auto_schema(
-        operation_id="Venue price detail", 
+        operation_id="Venue price detail",
         tags=['venue_price'],
         resposes={
             200: serializer_class
@@ -130,7 +130,7 @@ class LotPriceDetail(
         return self.retrieve(request, *args, **kwargs)
 
     @swagger_auto_schema(
-        operation_id="Update venue price detail", 
+        operation_id="Update venue price detail",
         tags=['venue_price'],
         resposes={
             200: serializer_class
@@ -140,7 +140,7 @@ class LotPriceDetail(
         return self.update(request, *args, **kwargs)
 
     @swagger_auto_schema(
-        operation_id="Partial update venue price detail", 
+        operation_id="Partial update venue price detail",
         tags=['venue_price'],
         resposes={
             200: serializer_class
@@ -150,7 +150,7 @@ class LotPriceDetail(
         return self.partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(
-        operation_id="Delete venue price detail", 
+        operation_id="Delete venue price detail",
         tags=['venue_price'],
         resposes={
             204: 'NO CONTENT'
@@ -177,16 +177,16 @@ class VenueTree(
             return serializers.VenueTreeSerializer
 
     @swagger_auto_schema(
-        operation_id="Company venue list", 
+        operation_id="Company venue list",
         tags=['venue'],
         responses={
             200: serializers.VenueTreeSerializer
         })
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
-    
+
     @swagger_auto_schema(
-        operation_id="Create company", 
+        operation_id="Create company",
         tags=['venue'],
         request_body=serializers.VenueSerializer,
         responses={
@@ -197,7 +197,7 @@ class VenueTree(
 
     def perform_create(self, serializer):
         serializer.save(company_id=self.kwargs.get('company_id'))
-        
+
 class Venue(mixins.MultipleFieldLookupMixin, generics.ListCreateAPIView):
     serializer_class = serializers.VenueTreeSerializer
     model_class = serializer_class.Meta.model
@@ -213,16 +213,16 @@ class Venue(mixins.MultipleFieldLookupMixin, generics.ListCreateAPIView):
             return serializers.VenueTreeSerializer
 
     @swagger_auto_schema(
-        operation_id="Sub venue list", 
+        operation_id="Sub venue list",
         tags=['venue'],
         responses={
             200: serializers.VenueTreeSerializer
         })
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, **kwargs)
-    
+
     @swagger_auto_schema(
-        operation_id="Create sub venue", 
+        operation_id="Create sub venue",
         tags=['venue'],
         request_body=serializers.VenueSerializer,
         responses={
@@ -232,13 +232,13 @@ class Venue(mixins.MultipleFieldLookupMixin, generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         return self.create(request, *args, **kwargs)
-    
+
     def perform_create(self, serializer):
         serializer.save(parent_id=self.kwargs.get('venue_id'))
 
 
 class VenueDetail(
-    mixins.MultipleFieldLookupMixin, 
+    mixins.MultipleFieldLookupMixin,
     generics.RetrieveUpdateDestroyAPIView):
     serializer_class = serializers.VenueSerializer
     model_class = serializer_class.Meta.model

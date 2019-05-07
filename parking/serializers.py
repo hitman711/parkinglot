@@ -16,7 +16,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email', 'password')
+        fields = ('first_name', 'last_name', 'email', 'password', 'username')
 
     def validate_email(self, value):
         value = value.lower()
@@ -32,7 +32,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise exceptions.APIException(
                 _('Service temporarily unavailable, try again later.')
-            ) 
+            )
 
 class UserLoginSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
@@ -43,7 +43,7 @@ class UserLoginSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ('username', 'password')
-    
+
     def validate(self, validated_data):
         """ """
         user = authenticate(
@@ -76,7 +76,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             'email', 'company_count', 'authentication_code',
             'username')
         read_only_fields = ('id', 'company_count', 'authentication_code')
-    
+
     def to_representation(self, instance):
         representation = super(
             UserDetailSerializer, self).to_representation(instance)
@@ -93,7 +93,7 @@ class CompanySerializer(serializers.ModelSerializer):
         model = models.Company
         fields = ('id', 'name', 'total_lot', 'available_lot')
         read_only_fields = ('total_lot', 'available_lot')
-    
+
 
 class VenueTreeSerializer(serializers.ModelSerializer):
     """ """
@@ -102,11 +102,11 @@ class VenueTreeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Venue
-        fields = ('id', 'name', 'category', 'children', 
+        fields = ('id', 'name', 'category', 'children',
             'total_lot', 'available_lot')
         read_only_fields = (
             'children', 'total_lot', 'available_lot')
-    
+
     def to_representation(self, instance):
         representation = super(
             VenueTreeSerializer, self).to_representation(instance)
@@ -130,7 +130,7 @@ class VenueViewSerializer(serializers.ModelSerializer):
     total_lot = serializers.IntegerField(default=0, read_only=True)
     available_lot = serializers.IntegerField(default=0, read_only=True)
     location = serializers.CharField(
-        max_length=200, allow_null=True, read_only=True, 
+        max_length=200, allow_null=True, read_only=True,
         allow_blank=True, source='get_location')
     company_name = serializers.CharField(
         max_length=200, allow_null=True, read_only=True,
@@ -144,7 +144,7 @@ class VenueViewSerializer(serializers.ModelSerializer):
             'total_lot', 'available_lot', 'location',
             'company_name')
         read_only_fields = (
-            'total_lot', 'available_lot', 'location', 
+            'total_lot', 'available_lot', 'location',
             'company_name')
 
 class VenueSerializer(serializers.ModelSerializer):
@@ -166,8 +166,8 @@ class VenueSerializer(serializers.ModelSerializer):
         model = models.Venue
         fields = (
             'id', 'name', 'category', 'price',
-            'total_lot', 'available_lot', 'location')
-        read_only_fields = ('total_lot', 'available_lot', 
+            'total_lot', 'available_lot', 'location', 'company_name')
+        read_only_fields = ('total_lot', 'available_lot',
         'location', 'company_name')
 
     def create(self, validated_data):
@@ -180,17 +180,17 @@ class VenueSerializer(serializers.ModelSerializer):
             raise exceptions.APIException(
                 _('Service temporarily unavailable, try again later.')
             )
-        
+
     def to_representation(self, instance):
         representation = VenueViewSerializer(instance).data
         return representation
-    
+
 class PaymentHistorySerializer(serializers.ModelSerializer):
     """ """
     class Meta:
         model = models.PaymentHistory
         fields = ('id', 'payment_type', 'amount')
-    
+
     def validate(self, validated_data):
         """ """
         if validated_data.get('reservation'):
@@ -240,7 +240,7 @@ class ReservationSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'amount', 'overdue_amount', 'payment_status',
             'total_amount', 'user')
-        
+
     def validate(self, validated_data):
         """ """
         venue = validated_data['venue']
@@ -278,7 +278,7 @@ class ReservationSerializer(serializers.ModelSerializer):
                         if days:
                             hours = hours + (days * 24)
                         total_amount = venue_price.amount * math.ceil(
-                            hours / venue_price.duration 
+                            hours / venue_price.duration
                         )
                     validated_data['total_amount'] = total_amount
                     if validated_data['total_amount'] == payment['amount']:
@@ -287,7 +287,7 @@ class ReservationSerializer(serializers.ModelSerializer):
                         validated_data['payment_status'] = models.Reservation.PARTIAL_PAID
                     if payment['amount']:
                         validated_data['total_amount_paid'] = payment['amount']
-                
+
                 instance = super(ReservationSerializer, self).create(
                     validated_data)
                 instance.payment_history.create(**payment)
