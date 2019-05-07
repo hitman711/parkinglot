@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+
+  migrate:
+    build: .
+    command: >-
+      bash -c  'source /home/siddhesh/parkinglot_env/bin/activate && python
+      manage.py migrate --noinput'
+    volumes:
+      - './:/home/siddhesh/parkinglot'
+
+  collectstatic:
+    build: .
+    command: >-
+      bash -c  'source /home/siddhesh/parkinglot_env/bin/activate && python
+      manage.py collectstatic --noinput'
+    volumes:
+      - './:/home/siddhesh/parkinglot'
+
+  redis:
+    container_name: redis
+    image: redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - ../data/redis:/data
+    entrypoint: redis-server --appendonly yes
+    restart: always
+
+  web:
+    build: .
+    command: >-
+      bash -c  'source /home/siddhesh/parkinglot_env/bin/activate && python
+      manage.py runserver 0.0.0.0:8000'
+    volumes:
+      - .:/home/siddhesh/parkinglot
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - db
+      - migrate
+      - collectstatic
