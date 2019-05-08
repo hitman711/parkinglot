@@ -41,6 +41,7 @@ pytest-django==3.4.8
 pytest-factoryboy==2.0.2
 python-dateutil==2.8.0
 pytz==2019.1
+redis==3.2.1
 requests==2.21.0
 ruamel.yaml==0.15.94
 six==1.12.0

@@ -5,6 +5,7 @@ from parkinglot.fields import TimestampField
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.db import transaction
+from django.db.models import Q
 from django.utils.translation import gettext as _
 
 from rest_framework import serializers, exceptions
@@ -224,6 +225,14 @@ class PaymentHistorySerializer(serializers.ModelSerializer):
                 _('Service temporarily unavailable, try again later.')
             )
 
+class VenueAvailableSerializer(serializers.ModelSerializer):
+    """ """
+    status = serializers.BooleanField(
+        max_length=
+    )
+    class Meta:
+        model = models.Reservation
+
 class ReservationSerializer(serializers.ModelSerializer):
     """ """
     payments = PaymentHistorySerializer(
@@ -241,10 +250,38 @@ class ReservationSerializer(serializers.ModelSerializer):
             'amount', 'overdue_amount', 'payment_status',
             'total_amount', 'user')
 
+    def validate_book_to(self, value):
+        """ """
+        if self.validated_data['book_from'] > value:
+            raise serializers.ValidationError(
+                _('Reservation end time should be'
+                ' greater than start timw')
+            )
+        return value
+
     def validate(self, validated_data):
         """ """
         venue = validated_data['venue']
         payment = validated_data['payment_history'][0]
+        check_booking = models.Reservation.objects.filter(
+            venue=venue,
+            Q(
+                book_from__range=(
+                    validated_data['book_from'], 
+                    validated_data['book_to']
+                ) |
+                book_to__range=(
+                    validated_data['book_from'], 
+                    validated_data['book_to']
+                )
+            )
+        )
+        if check_booking:
+            raise serializers.ValidationError(
+                _('Venue not available in given time.'
+                'Please select another slot')
+            )
+
         if venue.venue_price:
             if (
                 venue.venue_price.pre_paid_amount
@@ -257,7 +294,8 @@ class ReservationSerializer(serializers.ModelSerializer):
         return validated_data
 
     def create(self, validated_data):
-        """ """
+        """
+        """
         try:
             with transaction.atomic():
                 venue = validated_data['venue']

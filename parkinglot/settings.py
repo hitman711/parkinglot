@@ -105,8 +105,8 @@ DATABASES = {
 # https://realpython.com/blog/python/asynchronous-tasks-with-django-and-celery/
 import djcelery
 djcelery.setup_loader()
-BROKER_URL = 'redis://localhost:6379/1'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+BROKER_URL = 'redis://localhost:6379'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

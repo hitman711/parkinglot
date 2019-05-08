@@ -24,7 +24,7 @@ class VenueFilter(filters.FilterSet):
 
     class Meta:
         model = models.Venue
-        fields = ['available']
+        fields = ['available', 'company', 'parent']
 
 class ReservationFilter(filters.FilterSet):
     """ """

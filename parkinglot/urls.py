@@ -21,11 +21,22 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+description = "Parkinglot application provide solution to the user to find" \
+"parking place near to them. Also for the user to create & manage parking " \
+"places. User can create there own company or place and add parking place in" \
+" in that, set price for each parking place with duration and pre paid charges." \
+"User search places near to him, find available parkinglot, reserve the " \
+"parking place by paying pre paid amount and it's done. Once user park his" \
+" vehicle on parking spot then reservation will set active. When user remove his" \
+" vehicle from parking spot then reservation set closed. Before marked as closed" \
+" total payment calculate based on duration user selected for parking and over due" \
+" charges(in case of over due)."
+
 schema_view = get_schema_view(
    openapi.Info(
       title="Parking plot API",
       default_version='v1',
-      description="API"
+      description=description
    ),
    public=True,
    permission_classes=(permissions.AllowAny,),

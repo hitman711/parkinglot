@@ -43,4 +43,25 @@ services:
       - redis
       - db
       - migrate
-      - collectstatic
+      #   - collectstatic
+
+  celery:
+    build: .
+    command: >-
+      bash -c  'source /home/siddhesh/parkinglot_env/bin/activate &&
+      celery -A parkinglot worker -l info'
+    volumes:
+      - .:/home/siddhesh/parkinglot
+    depends_on:
+      - db
+      - redis
+  celery-beat:
+    build: .
+    command: >-
+      bash -c  'source /home/siddhesh/parkinglot_env/bin/activate && 
+      celery -A parkinglot beat -l info'
+    volumes:
+      - .:/home/siddhesh/parkinglot
+    depends_on:
+      - db
+      - redis
