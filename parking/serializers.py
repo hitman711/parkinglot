@@ -13,6 +13,7 @@ from rest_framework.authtoken.models import Token
 
 from . import models
 
+
 class RegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -34,6 +35,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
             raise exceptions.APIException(
                 _('Service temporarily unavailable, try again later.')
             )
+
 
 class UserLoginSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
@@ -63,25 +65,34 @@ class UserLoginSerializer(serializers.ModelSerializer):
         """ """
         return UserDetailSerializer(instance).data
 
+
 class UserDetailSerializer(serializers.ModelSerializer):
     """ """
     authentication_code = serializers.CharField(
         max_length=40, source='auth_token.key')
     company_count = serializers.IntegerField(
         default=0)
+    reservation_count = serializers.IntegerField(
+        default=0, help_text=_(
+            'Total no. of reservation user had till now'
+        )
+    )
 
     class Meta:
         model = User
         fields = (
             'id', 'first_name', 'last_name',
             'email', 'company_count', 'authentication_code',
-            'username')
-        read_only_fields = ('id', 'company_count', 'authentication_code')
+            'username', 'reservation_count')
+        read_only_fields = (
+            'id', 'company_count', 'authentication_code',
+            'reservation_count')
 
     def to_representation(self, instance):
         representation = super(
             UserDetailSerializer, self).to_representation(instance)
         representation['company_count'] = instance.companies.count()
+        representation['reservation_count'] = instance.user_reservation.count()
         return representation
 
 
@@ -104,7 +115,7 @@ class VenueTreeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Venue
         fields = ('id', 'name', 'category', 'children',
-            'total_lot', 'available_lot')
+                  'total_lot', 'available_lot')
         read_only_fields = (
             'children', 'total_lot', 'available_lot')
 
@@ -114,6 +125,7 @@ class VenueTreeSerializer(serializers.ModelSerializer):
         representation['children'] = VenueTreeSerializer(
             instance.get_children(), many=True).data
         return representation
+
 
 class LotPriceSerializer(serializers.ModelSerializer):
     """ """
@@ -148,6 +160,7 @@ class VenueViewSerializer(serializers.ModelSerializer):
             'total_lot', 'available_lot', 'location',
             'company_name')
 
+
 class VenueSerializer(serializers.ModelSerializer):
     """ """
     price = serializers.PrimaryKeyRelatedField(
@@ -166,10 +179,10 @@ class VenueSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Venue
         fields = (
-            'id', 'name', 'category', 'price',
+            'id', 'name', 'category', 'price', 'venue_type',
             'total_lot', 'available_lot', 'location', 'company_name')
         read_only_fields = ('total_lot', 'available_lot',
-        'location', 'company_name')
+                            'location', 'company_name')
 
     def create(self, validated_data):
         try:
@@ -186,6 +199,7 @@ class VenueSerializer(serializers.ModelSerializer):
         representation = VenueViewSerializer(instance).data
         return representation
 
+
 class PaymentHistorySerializer(serializers.ModelSerializer):
     """ """
     class Meta:
@@ -200,7 +214,7 @@ class PaymentHistorySerializer(serializers.ModelSerializer):
                 reservation.total_amount - reservation.total_amount_paid)
             if remaining_amount <= validated_data['amount']:
                 raise serializers.ValidationError(
-                    _('Total amount to be paid in %s' %(remaining_amount))
+                    _('Total amount to be paid in %s' % (remaining_amount))
                 )
         return validated_data
 
@@ -225,19 +239,12 @@ class PaymentHistorySerializer(serializers.ModelSerializer):
                 _('Service temporarily unavailable, try again later.')
             )
 
-class VenueAvailableSerializer(serializers.ModelSerializer):
-    """ """
-    status = serializers.BooleanField(
-        max_length=
-    )
-    class Meta:
-        model = models.Reservation
 
 class ReservationSerializer(serializers.ModelSerializer):
     """ """
     payments = PaymentHistorySerializer(
         many=True, source='payment_history')
-    book_from =  TimestampField()
+    book_from = TimestampField()
     book_to = TimestampField()
 
     class Meta:
@@ -250,28 +257,27 @@ class ReservationSerializer(serializers.ModelSerializer):
             'amount', 'overdue_amount', 'payment_status',
             'total_amount', 'user')
 
-    def validate_book_to(self, value):
-        """ """
-        if self.validated_data['book_from'] > value:
-            raise serializers.ValidationError(
-                _('Reservation end time should be'
-                ' greater than start timw')
-            )
-        return value
-
     def validate(self, validated_data):
         """ """
         venue = validated_data['venue']
         payment = validated_data['payment_history'][0]
+        if validated_data['book_from'] > validated_data['book_to']:
+            raise serializers.ValidationError(
+                _('Reservation end time should be'
+                  ' greater than start timw')
+            )
         check_booking = models.Reservation.objects.filter(
-            venue=venue,
+            venue=venue
+        ).filter(
             Q(
                 book_from__range=(
-                    validated_data['book_from'], 
+                    validated_data['book_from'],
                     validated_data['book_to']
-                ) |
+                )
+            ) |
+            Q(
                 book_to__range=(
-                    validated_data['book_from'], 
+                    validated_data['book_from'],
                     validated_data['book_to']
                 )
             )
@@ -279,7 +285,7 @@ class ReservationSerializer(serializers.ModelSerializer):
         if check_booking:
             raise serializers.ValidationError(
                 _('Venue not available in given time.'
-                'Please select another slot')
+                  'Please select another slot')
             )
 
         if venue.venue_price:

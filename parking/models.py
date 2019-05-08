@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db import models
+from django.db.models import Q
 from django.conf import settings
 from django.utils.translation import gettext as _
 
@@ -7,13 +8,14 @@ from mptt.models import MPTTModel, TreeForeignKey
 from phonenumber_field.modelfields import PhoneNumberField
 # Create your models here.
 
+
 class Company(models.Model):
     """ """
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        verbose_name=_('user'),
-        help_text=_('User company relationship'),
-        related_name='companies')
+                             on_delete=models.CASCADE,
+                             verbose_name=_('user'),
+                             help_text=_('User company relationship'),
+                             related_name='companies')
     name = models.CharField(
         _('name'),
         help_text=_('Name of the company'),
@@ -21,16 +23,30 @@ class Company(models.Model):
 
     def total_lot(self):
         """ """
-        return self.venues.filter(category=Venue.LOT).count()
-    
+        non_lot_venue = list(self.venues.exclude(
+            category=Venue.LOT).values_list('id', flat=True))
+        return Venue.objects.filter(
+            category=Venue.LOT
+        ).filter(
+            Q(company_id=self.id) |
+            Q(parent_id__in=non_lot_venue)
+        ).count()
+
     def available_lot(self):
         """ """
-        return self.venues.filter(
+        non_lot_venue = list(self.venues.exclude(
+            category=Venue.LOT).values_list('id', flat=True))
+
+        return Venue.objects.filter(
             category=Venue.LOT
+        ).filter(
+            Q(company_id=self.id) |
+            Q(parent_id__in=non_lot_venue)
         ).exclude(
             reservation__book_from__lte=timezone.now(),
             reservation__book_to__gte=timezone.now()
         ).count()
+
 
 class LotPrice(models.Model):
     """ """
@@ -76,7 +92,20 @@ class LotPrice(models.Model):
     )
 
     def __str__(self):
-        return '%s - %s' %(self.id, self.name)
+        return '%s - %s' % (self.id, self.name)
+
+
+def get_location_string(obj, location=''):
+    if obj.parent:
+        if obj.parent.category == Venue.FLOOR:
+            location = location + '%s floor, ' % (obj.parent.name)
+        if obj.parent.company:
+            location = location + obj.parent.company.name
+        if obj.parent.parent:
+            location = get_location_string(
+                obj.parent.parent, location=location)
+    return location
+
 
 class Venue(MPTTModel):
     """ """
@@ -90,20 +119,28 @@ class Venue(MPTTModel):
         (FLOOR, _('Floor'))
     )
 
+    PUBLIC = 'public'
+    PRIVATE = 'private'
+
+    VENUE_TYPE = (
+        (PUBLIC, _('Public')),
+        (PRIVATE, _('Private'))
+    )
+
     name = models.CharField(_('name'),
-        help_text=_('Venue name'),
-        max_length=100)
+                            help_text=_('Venue name'),
+                            max_length=100)
     company = models.ForeignKey(Company,
-        on_delete=models.CASCADE,
-        null=True,
-        verbose_name=_('company'),
-        help_text=_('Company relationship'),
-        related_name='venues')
+                                on_delete=models.CASCADE,
+                                null=True,
+                                verbose_name=_('company'),
+                                help_text=_('Company relationship'),
+                                related_name='venues')
     category = models.CharField(_('category'),
-        help_text=_('Venu Category'),
-        choices=VENUE_CATEGORY,
-        db_index=True,
-        max_length=100)
+                                help_text=_('Venu Category'),
+                                choices=VENUE_CATEGORY,
+                                db_index=True,
+                                max_length=100)
     parent = TreeForeignKey(
         'self', on_delete=models.CASCADE,
         null=True, blank=True,
@@ -115,14 +152,27 @@ class Venue(MPTTModel):
         null=True, verbose_name=_('venue_price'),
         help_text=_('Venue price relationship'),
         related_name='venue')
+    venue_type = models.CharField(
+        max_length=10, choices=VENUE_TYPE,
+        verbose_name=_('venue_type'),
+        help_text=_(
+            'Define type of venue'
+            'public venue accessable for non owner user'
+            'private venue are reserved for owner or company user to use'
+            'It\'s help when user is left the car on parking spot and but'
+            ' not take out at the checkout time, and next user have reservation'
+            ' but spot is not available. In such a case owner/manager use'
+            ' spot to manage extra vehicle'
+        ),
+        db_index=True,
+        default=PUBLIC)
 
     def get_location(self):
         """ """
         location = ''
         if self.parent:
-            if parent.category == self.FLOOR:
-                location = '%s floor, ' % (self.parent.name)
-        if self.company:
+            location = get_location_string(self)
+        elif self.company:
             location = location + '%s' % (self.company.name)
         return location
 
@@ -135,7 +185,7 @@ class Venue(MPTTModel):
             if not children:
                 return 0
             return children.filter(category=Venue.LOT).count()
-    
+
     def available_lot(self):
         """ """
         if self.category == self.LOT:
@@ -151,6 +201,13 @@ class Venue(MPTTModel):
                 reservation__book_to__gte=timezone.now()
             ).count()
 
+    def save(self, *args, **kwargs):
+        if not self.company:
+            if self.parent:
+                self.company = self.parent.company
+        super(Venue, self).save(*args, **kwargs)
+
+
 class Reservation(models.Model):
     """ """
     PENDING = 'pending'
@@ -165,10 +222,10 @@ class Reservation(models.Model):
         (ACTIVE, _('Active')),
         (CLOSED, _('Closed')),
         (CANCELED, ('Canceled')))
-    
+
     PARTIAL_PAID = 'partial paid'
     FULL_PAID = 'full paid'
-    
+
     PAYMENT_STATUS = (
         (PENDING, _('Payment pending')),
         (PARTIAL_PAID, _('Partial Paid')),
@@ -193,6 +250,7 @@ class Reservation(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
+        related_name='user_reservation',
         null=True, verbose_name=_('user'),
         help_text=_('User reservation relationship'))
     status = models.CharField(
@@ -213,7 +271,7 @@ class Reservation(models.Model):
         max_digits=6, decimal_places=2
     )
     payment_status = models.CharField(
-        choices=PAYMENT_STATUS, default=PENDING, 
+        choices=PAYMENT_STATUS, default=PENDING,
         max_length=20,
         verbose_name=_('payment_status'),
         help_text=_('Reservation payment status'))
@@ -227,7 +285,6 @@ class Reservation(models.Model):
         help_text=_('Final amount to be paid for reservation'),
         default=0,
         max_digits=6, decimal_places=2)
-    
 
 
 class PaymentHistory(models.Model):

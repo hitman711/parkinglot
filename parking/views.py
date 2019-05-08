@@ -40,6 +40,42 @@ class Login(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+class Detail(generics.GenericAPIView):
+    """ """
+    serializer_class = serializers.UserDetailSerializer
+    model_class = serializer_class.Meta.model
+
+    @swagger_auto_schema(
+        operation_id="User Detail",
+        tags=['user'],
+        responses={
+            200: serializers.UserDetailSerializer
+        })
+    def get(self, request, *args, **kwargs):
+        """ API endpoint fetch user detail.
+        """
+        serializer = self.serializer_class(
+            request.user, context=self.get_serializer_context())
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+        operation_id="User Update",
+        tags=['user'],
+        request_body=serializer_class,
+        responses={
+            200: serializers.UserDetailSerializer
+        })
+    def put(self, request, *args, **kwargs):
+        """ API endpoint fetch user detail.
+        """
+        serializer = self.serializer_class(
+            data=request.data, instance=request.user,
+            context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class Register(generics.CreateAPIView):
     """ API endpoint to authenticate & register user detail
     """
@@ -60,8 +96,9 @@ class Register(generics.CreateAPIView):
         """
         return self.create(request, *args, **kwargs)
 
+
 class Company(
-    mixins.MultipleFieldLookupMixin, generics.ListCreateAPIView):
+        mixins.MultipleFieldLookupMixin, generics.ListCreateAPIView):
     """ API endpoint to list or create company
 
     User must be logged in to create company.
@@ -77,7 +114,7 @@ class Company(
     search_fields = ('name',)
 
     def custom_query_class():
-        queryset =self.get_queryset()
+        queryset = self.get_queryset()
         return queryset.filter(user=self.request.user)
 
     @swagger_auto_schema(
@@ -102,16 +139,17 @@ class Company(
     def post(self, request, *args, **kwargs):
         """ API endpoint to create new company
 
-        Active user set as company owner 
+        Active user set as company owner
         """
         return self.create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+
 class CompanyDetail(
-    mixins.MultipleFieldLookupMixin,
-    generics.RetrieveUpdateDestroyAPIView):
+        mixins.MultipleFieldLookupMixin,
+        generics.RetrieveUpdateDestroyAPIView):
     """ API endpoint to retrieve, update or delete company
 
     Only owner of the company can perform above operations
@@ -173,8 +211,8 @@ class CompanyDetail(
 
 
 class LotPrice(
-    mixins.MultipleFieldLookupMixin,
-    generics.ListCreateAPIView):
+        mixins.MultipleFieldLookupMixin,
+        generics.ListCreateAPIView):
     """ API endpoint to create prices for venues
     """
     serializer_class = serializers.LotPriceSerializer
@@ -209,9 +247,10 @@ class LotPrice(
     def perform_create(self, serializer):
         serializer.save(company_id=self.kwargs.get('company_id'))
 
+
 class LotPriceDetail(
-    mixins.MultipleFieldLookupMixin,
-    generics.RetrieveUpdateDestroyAPIView):
+        mixins.MultipleFieldLookupMixin,
+        generics.RetrieveUpdateDestroyAPIView):
     """  API endpoint to create Retrieve, update or delete venue price
     """
     serializer_class = serializers.LotPriceSerializer
@@ -263,16 +302,17 @@ class LotPriceDetail(
     )
     def delete(self, request, *args, **kwargs):
         """ API endpoint to delete price detail
-        
+
         On price delete all the relation with venue will set null
         """
         return self.destroy(request, *args, **kwargs)
 
+
 class VenueTree(
-    mixins.MultipleFieldLookupMixin,
-    generics.ListCreateAPIView):
+        mixins.MultipleFieldLookupMixin,
+        generics.ListCreateAPIView):
     """ API endpoint to get tree view for company
-    
+
     Venue tree only visible if venue have parent child relation ship
     """
     serializer_class = serializers.VenueTreeSerializer
@@ -296,7 +336,7 @@ class VenueTree(
         })
     def get(self, request, *args, **kwargs):
         """ API endpoint to get venue tree view
-        
+
         Venue tree only visible if venue have parent child relation ship
         """
         return self.list(request, *args, **kwargs)
@@ -313,6 +353,7 @@ class VenueTree(
 
     def perform_create(self, serializer):
         serializer.save(company_id=self.kwargs.get('company_id'))
+
 
 class Venue(mixins.MultipleFieldLookupMixin, generics.ListCreateAPIView):
     """ API endpoint to get or create Venue"""
@@ -351,7 +392,7 @@ class Venue(mixins.MultipleFieldLookupMixin, generics.ListCreateAPIView):
     )
     def post(self, request, *args, **kwargs):
         """ API endpoint to create new sub venue
-        
+
         URL venue id set as a parent id for newly created venue
         """
         return self.create(request, *args, **kwargs)
@@ -361,10 +402,10 @@ class Venue(mixins.MultipleFieldLookupMixin, generics.ListCreateAPIView):
 
 
 class VenueDetail(
-    mixins.MultipleFieldLookupMixin,
-    generics.RetrieveUpdateDestroyAPIView):
+        mixins.MultipleFieldLookupMixin,
+        generics.RetrieveUpdateDestroyAPIView):
     """ API endpoint to retrieve, update and delete venue
-    
+
     On venue delete all the reservation get deleted
     """
     serializer_class = serializers.VenueSerializer
@@ -421,25 +462,10 @@ class VenueDetail(
         """ API endpoint to delete venue detail"""
         return self.destroy(request, *args, **kwargs)
 
-class VenueAvailable(
-    mixins.MultipleFieldLookupMixin,
-    generics.GenericAPIView
-):
-    """ """
-    serializer_class = serializers.VenueAvailableSerializer
-    model_class = serializer_class.Meta.model
-    lookup_fields = ('venue_id',)
-    lookup_url_kwargs = ('venue_id',)
-    filter_class = filters.ReservationFilter
-
-    def get(self, request, *args, **kwargs):
-        """ """
-        
-
 
 class VenueList(
-    mixins.MultipleFieldLookupMixin,
-    generics.ListAPIView):
+        mixins.MultipleFieldLookupMixin,
+        generics.ListAPIView):
     serializer_class = serializers.VenueSerializer
     model_class = serializer_class.Meta.model
     select_related = ()
@@ -448,6 +474,13 @@ class VenueList(
     lookup_url_kwargs = ()
     filter_class = filters.VenueFilter
     search_fields = ('name', 'company__name', 'parent__name')
+
+    def custom_query_class(self):
+        """ """
+        queryset = self.get_queryset()
+        return queryset.filter(
+            category=self.model_class.LOT,
+            venue_type=self.model_class.PUBLIC)
 
     @swagger_auto_schema(
         operation_id="Search Venue detail",
@@ -463,8 +496,8 @@ class VenueList(
 
 
 class ReservationList(
-    mixins.MultipleFieldLookupMixin,
-    generics.ListCreateAPIView):
+        mixins.MultipleFieldLookupMixin,
+        generics.ListCreateAPIView):
     serializer_class = serializers.ReservationSerializer
     model_class = serializer_class.Meta.model
     select_related = ()
@@ -482,11 +515,11 @@ class ReservationList(
         operation_id="List user reservation",
         tags=['reservation'],
         responses={
-            200: serializers.VenueSerializer
+            200: serializers.ReservationSerializer
         }
     )
     def get(self, request, *args, **kwargs):
-        """ API endpoint to get user reservation
+        """ API endpoint to get reservation list
         """
         return self.list(request, *args, **kwargs)
 
@@ -494,7 +527,7 @@ class ReservationList(
         operation_id="Create new reservation",
         tags=['reservation'],
         responses={
-            200: serializers.VenueSerializer
+            200: serializers.ReservationSerializer
         }
     )
     def post(self, request, *args, **kwargs):
@@ -504,6 +537,30 @@ class ReservationList(
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class CompanyReservationList(ReservationList):
+
+    def custom_query_class(self):
+        queryset = self.get_queryset()
+        return queryset.filter(
+            venue__company__user=self.request.user
+        )
+
+
+class ReservationDetail(
+        mixins.MultipleFieldLookupMixin,
+        generics.RetrieveUpdateAPIView):
+    """ """
+    serializer_class = serializers.ReservationSerializer
+    model_class = serializer_class.Meta.model
+    select_related = ()
+    prefetch_related = ()
+    lookup_fields = ()
+    lookup_url_kwargs = ()
+    filter_class = filters.ReservationFilter
+    search_fields = ('venue__name',)
+
 
 class PaymentHistory(
     mixins.MultipleFieldLookupMixin,

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+import djcelery
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -90,20 +91,25 @@ WSGI_APPLICATION = 'parkinglot.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'parkinglot',
+#         'USER': 'postgres',
+#         'PASSWORD': 'postgres',
+#         'HOST': '192.168.1.101',
+#         'PORT': 5432
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'parkinglot',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': '192.168.1.101',
-        'PORT': 5432
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
 # CELERY configuration
 # https://realpython.com/blog/python/asynchronous-tasks-with-django-and-celery/
-import djcelery
 djcelery.setup_loader()
 BROKER_URL = 'redis://localhost:6379'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379'
@@ -155,23 +161,23 @@ STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES':(
+    'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.TokenAuthentication'
     ),
-    'DEFAULT_PERMISSION_CLASSES':(
+    'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_FILTER_BACKENDS':(
+    'DEFAULT_FILTER_BACKENDS': (
         'rest_framework_filters.backends.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter'
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'COMPACT_JSON':True,
-    'UNICODE_JSON':True,
-    'PAGE_SIZE':20,
+    'COMPACT_JSON': True,
+    'UNICODE_JSON': True,
+    'PAGE_SIZE': 20,
     'DATETIME_FORMAT': '%s',
     'DATETIME_INPUT_FORMATS': '%s'
 }
@@ -179,6 +185,6 @@ REST_FRAMEWORK = {
 # Django extensions provide graph model funcationlity which help to
 # generate graphical image of database relationship
 GRAPH_MODELS = {
-  'all_applications': True,
-  'group_models': True,
+    'all_applications': True,
+    'group_models': True,
 }
