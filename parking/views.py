@@ -324,6 +324,7 @@ class VenueTree(
     permission_classes = ()
     lookup_fields = ('company_id',)
     lookup_url_kwargs = ('company_id',)
+    search_fields = ('name', 'company__name', 'parent__name')
 
     def get_serializer_class(self):
         if self.request.method == 'POST':

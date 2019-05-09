@@ -283,11 +283,12 @@ class ReservationSerializer(ReservationViewSerializer):
     def validate(self, validated_data):
         """ """
         venue = validated_data['venue']
-        payment = validated_data['payment_history'][0]
+        if validated_data['payment_history']:
+            payment = validated_data['payment_history'][0]
         if validated_data['book_from'] > validated_data['book_to']:
             raise serializers.ValidationError(
                 _('Reservation end time should be'
-                  ' greater than start timw')
+                  ' greater than start time')
             )
         check_booking = models.Reservation.objects.filter(
             venue=venue
@@ -328,7 +329,9 @@ class ReservationSerializer(ReservationViewSerializer):
         try:
             with transaction.atomic():
                 venue = validated_data['venue']
-                payment = validated_data.pop('payment_history')[0]
+                payment = validated_data.pop('payment_history')
+                if payment:
+                    payment = payment[0]
                 if venue.venue_price:
                     venue_price = venue.venue_price
                     validated_data['amount'] = venue_price.amount
@@ -357,9 +360,11 @@ class ReservationSerializer(ReservationViewSerializer):
 
                 instance = super(ReservationSerializer, self).create(
                     validated_data)
-                instance.payment_history.create(**payment)
+                if payment:
+                    instance.payment_history.create(**payment)
                 return instance
         except Exception as e:
+            raise e
             raise exceptions.APIException(
                 _('Service temporarily unavailable, try again later.')
             )

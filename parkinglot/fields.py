@@ -6,6 +6,7 @@ class TimestampField(serializers.DateTimeField):
     """
     Convert a django datetime to/from timestamp.
     """
+
     def to_representation(self, value):
         """
         Convert the field to its internal representation (aka timestamp)
@@ -20,5 +21,10 @@ class TimestampField(serializers.DateTimeField):
         :param value: the timestamp value
         :return: a django DateTime value
         """
-        converted = datetime.fromtimestamp(float('%s' % value))
+        try:
+            converted = datetime.fromtimestamp(float('%s' % value))
+        except Exception as e:
+            raise serializers.ValidationError(
+                'Invalid date time format. Expected integer got string')
+
         return converted
