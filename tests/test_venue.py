@@ -467,3 +467,53 @@ class TestReservationAPI(object):
         assert response.status_code == 400
         json_response = response.json()
         assert json_response['non_field_errors']
+
+
+    def test_reservation_invalid_date_format(self, client):
+        new_user = UserFactory(
+            username='ganesh',
+            password=make_password('sidh@123'),
+            first_name='Ganesh', last_name='Gore',
+            email='gane123@gmail.com')
+        token = TokenFactory(user=new_user)
+        price = PriceFactory(
+            name='Car price', company=self.company,
+            duration=1, duration_unit=LotPrice.HOUR,
+            pre_paid_amount=10, amount=100, overdue_amount=5)
+
+        for x in range(1, 10):
+            LotFactory(
+                company=self.company,
+                name='Parking %s' % (x),
+                venue_price=price,
+                parent=None)
+
+        book_from = str(timezone.now())
+        book_to = str(timezone.now())
+
+        json_data = {
+            'venue': 1,
+            'book_from': book_from,
+            'book_to': book_to,
+            'payments': [{
+                'amount': 10,
+                'payment_type': PaymentHistory.CASH
+            }],
+            'license': 'MH 04 1234',
+            'phone_number': '+918082611337'
+        }
+        response = self.client.post(
+            reverse(
+                'reservation',
+                kwargs={
+                    'version': 1
+                }
+            ),
+            data=json.dumps(json_data),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Token %s' % (token.key)
+        )
+        assert response.status_code == 400
+        json_response = response.json()
+        assert json_response['book_from']
+        assert json_response['book_to']

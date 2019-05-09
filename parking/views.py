@@ -92,7 +92,7 @@ class Register(generics.CreateAPIView):
         tags=['user'],
         request_body=serializer_class,
         responses={
-            201: {'message': _('User generated successfully')}
+            201: "{'message': 'User generated successfully'}"
         })
     def post(self, request, *args, **kwargs):
         """ API endpoint to authenticate & register user detail
@@ -574,7 +574,7 @@ class ReservationDetail(
             200: serializers.ReservationViewSerializer
         }
     )
-    def get(self, requests, *args, **kwargs):
+    def get(self, request, *args, **kwargs):
         """ API endpoint to get reservation detail"""
         return self.retrieve(request, *args, **kwargs)
 
@@ -585,7 +585,7 @@ class ReservationDetail(
             200: serializers.ReservationViewSerializer
         }
     )
-    def patch(self, requests, *args, **kwargs):
+    def patch(self, request, *args, **kwargs):
         """ API endpoint to get reservation detail"""
         return self.partial_update(request, *args, **kwargs)
 
@@ -596,7 +596,7 @@ class ReservationDetail(
             200: serializers.ReservationViewSerializer
         }
     )
-    def put(self, requests, *args, **kwargs):
+    def put(self, request, *args, **kwargs):
         """ API endpoint to get reservation detail"""
         return self.update(request, *args, **kwargs)
 

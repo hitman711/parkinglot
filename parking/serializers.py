@@ -323,6 +323,11 @@ class ReservationSerializer(ReservationViewSerializer):
                 )
         return validated_data
 
+    def update(self, instance, validated_data):
+        instance.__dict__.update(**validated_data)
+        instance.save()
+        return instance
+
     def create(self, validated_data):
         """
         """
