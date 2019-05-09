@@ -33,6 +33,9 @@ urlpatterns = [
     path('venue', views.VenueList.as_view(), name='venue'),
     # Venue booking
     path('reservation', views.ReservationList.as_view(), name='reservation'),
+    # Venue booking detail
+    path('reservation/<int:reservation_id>', 
+    views.ReservationDetail.as_view(), name='reservation-detail'),
     # Company reservation
     path('company-reservation',
          views.CompanyReservationList.as_view(), name='reservation'),

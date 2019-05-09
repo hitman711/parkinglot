@@ -213,6 +213,7 @@ class Reservation(models.Model):
     PENDING = 'pending'
     BOOKED = 'booked'
     ACTIVE = 'active'
+    OVERDUE = 'overdue'
     CLOSED = 'closed'
     CANCELED = 'canceled'
 
@@ -220,6 +221,7 @@ class Reservation(models.Model):
         (PENDING, _('Pending')),
         (BOOKED, _('booked')),
         (ACTIVE, _('Active')),
+        (OVERDUE, _('Overdue')),
         (CLOSED, _('Closed')),
         (CANCELED, ('Canceled')))
 

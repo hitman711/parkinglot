@@ -540,7 +540,8 @@ class ReservationList(
 
 
 class CompanyReservationList(ReservationList):
-
+    """ API endpoint to get venue reservation list
+    """
     def custom_query_class(self):
         queryset = self.get_queryset()
         return queryset.filter(
@@ -551,15 +552,48 @@ class CompanyReservationList(ReservationList):
 class ReservationDetail(
         mixins.MultipleFieldLookupMixin,
         generics.RetrieveUpdateAPIView):
-    """ """
+    """ API endpoint to get or update reservation detail"""
     serializer_class = serializers.ReservationSerializer
     model_class = serializer_class.Meta.model
     select_related = ()
     prefetch_related = ()
-    lookup_fields = ()
-    lookup_url_kwargs = ()
+    lookup_fields = ('id', )
+    lookup_url_kwargs = ('reservation_id',)
     filter_class = filters.ReservationFilter
     search_fields = ('venue__name',)
+
+    @swagger_auto_schema(
+        operation_id="Reservation detail",
+        tags=['reservation'],
+        responses={
+            200: serializers.ReservationSerializer
+        }
+    )
+    def get(self, requests, *args, **kwargs):
+        """ API endpoint to get reservation detail"""
+        return self.retrieve(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_id="Partial update Reservation",
+        tags=['reservation'],
+        responses={
+            200: serializers.ReservationSerializer
+        }
+    )
+    def patch(self, requests, *args, **kwargs):
+        """ API endpoint to get reservation detail"""
+        return self.partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_id="Update Reservation",
+        tags=['reservation'],
+        responses={
+            200: serializers.ReservationSerializer
+        }
+    )
+    def put(self, requests, *args, **kwargs):
+        """ API endpoint to get reservation detail"""
+        return self.update(request, *args, **kwargs)
 
 
 class PaymentHistory(
@@ -572,6 +606,29 @@ class PaymentHistory(
     prefetch_related = ()
     lookup_fields = ('reservation_id',)
     lookup_url_kwargs = ('reservation_id',)
+
+
+    @swagger_auto_schema(
+        operation_id="Reservation payment list",
+        tags=['payment'],
+        responses={
+            200: serializers.PaymentHistorySerializer
+        }
+    )
+    def get(self, request, *args, **kwargs):
+        """ API endpoint to fetch payment detail for reservation"""
+        return self.list(request, *args, **kwargs)
+
+    @swagger_auto_schema(
+        operation_id="Create new reservation payment",
+        tags=['payment'],
+        responses={
+            200: serializers.PaymentHistorySerializer
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        """ API endpoint to create new payment record for reservation"""
+        return self.create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(
