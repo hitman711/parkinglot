@@ -1,21 +1,22 @@
 import json
 import pytest
 import urllib
-import http.client
 
 from django.urls import reverse
 
 from .fixtures.test_fixtures import CompanyFactory
 
+
 @pytest.mark.django_db
 class TestUserAPI(object):
-    
+
     @pytest.fixture(autouse=True)
     def setup(self, client, user):
         self.client = client
         self.login_key = [
             'id', 'first_name', 'last_name', 'username',
-            'email', 'authentication_code'
+            'email', 'authentication_code', 'company_id',
+            'reservation_count'
         ].sort()
         self.company_key = [
             'id', 'name', 'total_lot', 'available_lot'
@@ -23,7 +24,7 @@ class TestUserAPI(object):
         self.list_key = ['count', 'next', 'previous', 'results'].sort()
         self.user = None
         self.token = None
-    
+
     def test_login(self):
         """ """
         json_data = {
@@ -43,6 +44,64 @@ class TestUserAPI(object):
         login_key = list(json_response.keys())
         assert self.login_key == login_key.sort()
 
+    def test_registration(self):
+        """ """
+        json_data = {
+            'username': 'sidh712',
+            'password': 'sidh@123',
+            'first_name': 'siddhesh',
+            'last_name': 'gore',
+            'email': 'sidh711@gmail.com'
+        }
+        response = self.client.post(
+            reverse(
+                'register',
+                kwargs={'version': 1}
+            ),
+            data=json.dumps(json_data),
+            content_type='application/json'
+        )
+        assert response.status_code == 201
+        json_response = response.json()
+        assert json_response['message']
+        assert json_response['message'] == 'User generated successfully'
+
+    def test_existing_user_registration(self):
+        """ """
+        json_data = {
+            'username': 'sidh711',
+            'password': 'sidh@123',
+            'first_name': 'siddhesh',
+            'last_name': 'gore',
+            'email': 'sidh711@gmail.com'
+        }
+        response = self.client.post(
+            reverse(
+                'register',
+                kwargs={'version': 1}
+            ),
+            data=json.dumps(json_data),
+            content_type='application/json'
+        )
+        assert response.status_code == 400
+        json_response = response.json()
+        assert json_response['username']
+
+    def test_detail(self, user_token):
+        """ """
+        response = self.client.get(
+            reverse(
+                'detail',
+                kwargs={'version': 1}
+            ),
+            content_type='application/json',
+            HTTP_AUTHORIZATION='Token %s' % (user_token.key)
+        )
+        assert response.status_code == 200
+        json_response = response.json()
+        login_key = list(json_response.keys())
+        assert self.login_key == login_key.sort()
+
     def test_company(self, user_token):
         """ """
         json_data = {
@@ -51,7 +110,7 @@ class TestUserAPI(object):
         response = self.client.post(
             reverse(
                 'company',
-                kwargs={'version':1},
+                kwargs={'version': 1},
             ),
             data=json.dumps(json_data),
             content_type='application/json',
@@ -69,7 +128,7 @@ class TestUserAPI(object):
         response = self.client.post(
             reverse(
                 'company',
-                kwargs={'version':1},
+                kwargs={'version': 1},
             ),
             data=json.dumps(json_data),
             content_type='application/json',
@@ -86,7 +145,7 @@ class TestUserAPI(object):
         response = self.client.get(
             reverse(
                 'company',
-                kwargs={'version':1}
+                kwargs={'version': 1}
             ),
             content_type='application/json',
             HTTP_AUTHORIZATION='Token %s' % (user_token.key)
@@ -104,14 +163,14 @@ class TestUserAPI(object):
         for x in range(2, 11):
             CompanyFactory(
                 user=user_token.user,
-                name='company %s' %(x))
-        
+                name='company %s' % (x))
+
         response = self.client.get(
             reverse(
                 'company',
-                kwargs={'version':1},
+                kwargs={'version': 1},
             ) + "?" + urllib.parse.urlencode({
-                'search':5
+                'search': 5
             }),
             content_type='application/json',
             HTTP_AUTHORIZATION='Token %s' % (user_token.key)
@@ -131,12 +190,12 @@ class TestUserAPI(object):
             reverse(
                 'company-detail',
                 kwargs={
-                    'version':1,
-                    'company_id':user_company.id
+                    'version': 1,
+                    'company_id': user_company.id
                 }
             ),
             content_type='application/json',
-            HTTP_AUTHORIZATION='Token %s' %(user_token.key)
+            HTTP_AUTHORIZATION='Token %s' % (user_token.key)
         )
         assert response.status_code == 200
         json_response = response.json()

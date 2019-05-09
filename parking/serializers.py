@@ -36,6 +36,11 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 _('Service temporarily unavailable, try again later.')
             )
 
+    def to_representation(self, instance):
+        return {
+            'message': _('User generated successfully')
+        }
+
 
 class UserLoginSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
@@ -70,7 +75,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     """ """
     authentication_code = serializers.CharField(
         max_length=40, source='auth_token.key')
-    company_count = serializers.IntegerField(
+    company_id = serializers.IntegerField(
         default=0)
     reservation_count = serializers.IntegerField(
         default=0, help_text=_(
@@ -82,16 +87,18 @@ class UserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'first_name', 'last_name',
-            'email', 'company_count', 'authentication_code',
+            'email', 'company_id', 'authentication_code',
             'username', 'reservation_count')
         read_only_fields = (
-            'id', 'company_count', 'authentication_code',
+            'id', 'company_id', 'authentication_code',
             'reservation_count')
 
     def to_representation(self, instance):
         representation = super(
             UserDetailSerializer, self).to_representation(instance)
-        representation['company_count'] = instance.companies.count()
+        company = instance.companies.last()
+        if company:
+            representation['company_id'] = company.id
         representation['reservation_count'] = instance.user_reservation.count()
         return representation
 
@@ -240,12 +247,20 @@ class PaymentHistorySerializer(serializers.ModelSerializer):
             )
 
 
-class ReservationSerializer(serializers.ModelSerializer):
+class ReservationVenueSerializer(serializers.ModelSerializer):
     """ """
-    payments = PaymentHistorySerializer(
-        many=True, source='payment_history')
+    class Meta:
+        model = models.Venue
+        fields = ('id', 'name')
+
+
+class ReservationViewSerializer(serializers.ModelSerializer):
+    """ """
     book_from = TimestampField()
     book_to = TimestampField()
+    payments = PaymentHistorySerializer(
+        many=True, source='payment_history')
+    venue = ReservationVenueSerializer()
 
     class Meta:
         model = models.Reservation
@@ -256,6 +271,14 @@ class ReservationSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'amount', 'overdue_amount', 'payment_status',
             'total_amount', 'user')
+
+
+class ReservationSerializer(ReservationViewSerializer):
+    """ """
+    book_from = TimestampField()
+    book_to = TimestampField()
+    venue = serializers.PrimaryKeyRelatedField(
+        queryset=models.Venue.objects.all())
 
     def validate(self, validated_data):
         """ """
@@ -340,3 +363,8 @@ class ReservationSerializer(serializers.ModelSerializer):
             raise exceptions.APIException(
                 _('Service temporarily unavailable, try again later.')
             )
+
+    def to_representation(self, instance):
+        return ReservationViewSerializer(
+            instance, context=self.context
+        ).data

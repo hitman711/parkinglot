@@ -1,11 +1,14 @@
 """ parking app view configuration
 """
 from django.shortcuts import render
+from django.utils.translation import gettext as _
+
 
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from drf_yasg.utils import swagger_auto_schema
+
 from drf_yasg import openapi
 
 from parkinglot import mixins
@@ -89,7 +92,7 @@ class Register(generics.CreateAPIView):
         tags=['user'],
         request_body=serializer_class,
         responses={
-            200: serializers.RegistrationSerializer
+            201: {'message': _('User generated successfully')}
         })
     def post(self, request, *args, **kwargs):
         """ API endpoint to authenticate & register user detail
@@ -515,7 +518,7 @@ class ReservationList(
         operation_id="List user reservation",
         tags=['reservation'],
         responses={
-            200: serializers.ReservationSerializer
+            200: serializers.ReservationViewSerializer
         }
     )
     def get(self, request, *args, **kwargs):
@@ -527,7 +530,7 @@ class ReservationList(
         operation_id="Create new reservation",
         tags=['reservation'],
         responses={
-            200: serializers.ReservationSerializer
+            200: serializers.ReservationViewSerializer
         }
     )
     def post(self, request, *args, **kwargs):
@@ -542,6 +545,7 @@ class ReservationList(
 class CompanyReservationList(ReservationList):
     """ API endpoint to get venue reservation list
     """
+
     def custom_query_class(self):
         queryset = self.get_queryset()
         return queryset.filter(
@@ -566,7 +570,7 @@ class ReservationDetail(
         operation_id="Reservation detail",
         tags=['reservation'],
         responses={
-            200: serializers.ReservationSerializer
+            200: serializers.ReservationViewSerializer
         }
     )
     def get(self, requests, *args, **kwargs):
@@ -577,7 +581,7 @@ class ReservationDetail(
         operation_id="Partial update Reservation",
         tags=['reservation'],
         responses={
-            200: serializers.ReservationSerializer
+            200: serializers.ReservationViewSerializer
         }
     )
     def patch(self, requests, *args, **kwargs):
@@ -588,7 +592,7 @@ class ReservationDetail(
         operation_id="Update Reservation",
         tags=['reservation'],
         responses={
-            200: serializers.ReservationSerializer
+            200: serializers.ReservationViewSerializer
         }
     )
     def put(self, requests, *args, **kwargs):
@@ -606,7 +610,6 @@ class PaymentHistory(
     prefetch_related = ()
     lookup_fields = ('reservation_id',)
     lookup_url_kwargs = ('reservation_id',)
-
 
     @swagger_auto_schema(
         operation_id="Reservation payment list",

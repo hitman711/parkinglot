@@ -10,7 +10,7 @@ from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Company(models.Model):
-    """ """
+    """ Model to stor user company information"""
     user = models.ForeignKey(settings.AUTH_USER_MODEL,
                              on_delete=models.CASCADE,
                              verbose_name=_('user'),
@@ -22,7 +22,7 @@ class Company(models.Model):
         max_length=100)
 
     def total_lot(self):
-        """ """
+        """ Total no. of parking lot created this company"""
         non_lot_venue = list(self.venues.exclude(
             category=Venue.LOT).values_list('id', flat=True))
         return Venue.objects.filter(
@@ -33,7 +33,7 @@ class Company(models.Model):
         ).count()
 
     def available_lot(self):
-        """ """
+        """ Total no. of parking lot available now for this company"""
         non_lot_venue = list(self.venues.exclude(
             category=Venue.LOT).values_list('id', flat=True))
 
@@ -49,7 +49,7 @@ class Company(models.Model):
 
 
 class LotPrice(models.Model):
-    """ """
+    """ Model to store amount break up to manage venue price"""
     HOUR = 'hour'
     DAY = 'day'
     DURATION_UNIT = (
@@ -96,6 +96,7 @@ class LotPrice(models.Model):
 
 
 def get_location_string(obj, location=''):
+    """ String to show parking location in company"""
     if obj.parent:
         if obj.parent.category == Venue.FLOOR:
             location = location + '%s floor, ' % (obj.parent.name)
@@ -114,8 +115,8 @@ class Venue(MPTTModel):
     FLOOR = 'floor'
 
     VENUE_CATEGORY = (
-        (BUILDING, _('Building'),),
-        (LOT, _('Lot'),),
+        (BUILDING, _('Building')),
+        (LOT, _('Lot')),
         (FLOOR, _('Floor'))
     )
 
@@ -136,21 +137,32 @@ class Venue(MPTTModel):
                                 verbose_name=_('company'),
                                 help_text=_('Company relationship'),
                                 related_name='venues')
-    category = models.CharField(_('category'),
-                                help_text=_('Venu Category'),
-                                choices=VENUE_CATEGORY,
-                                db_index=True,
-                                max_length=100)
+    category = models.CharField(
+        _('category'),
+        help_text=_(
+            'Venu Category'
+            'Each venue have specific category'),
+        choices=VENUE_CATEGORY,
+        db_index=True,
+        max_length=100)
     parent = TreeForeignKey(
         'self', on_delete=models.CASCADE,
         null=True, blank=True,
         verbose_name=_('parent'),
-        help_text=_('Child parent relationship'),
+        help_text=_(
+            'Child parent relationship'
+            'MPTT relationship to find out parent relation from same'
+            'model object. MPTT provide tree structre view'),
         related_name='children')
     venue_price = models.ForeignKey(
         LotPrice, on_delete=models.SET_NULL,
         null=True, verbose_name=_('venue_price'),
-        help_text=_('Venue price relationship'),
+        help_text=_(
+            'Venue price relationship'
+            'Each sellable venue have price'
+            'Price model store that information'
+            'If price relation not available and venue is sellable then'
+            'venue price considered as free'),
         related_name='venue')
     venue_type = models.CharField(
         max_length=10, choices=VENUE_TYPE,
@@ -160,9 +172,9 @@ class Venue(MPTTModel):
             'public venue accessable for non owner user'
             'private venue are reserved for owner or company user to use'
             'It\'s help when user is left the car on parking spot and but'
-            ' not take out at the checkout time, and next user have reservation'
-            ' but spot is not available. In such a case owner/manager use'
-            ' spot to manage extra vehicle'
+            ' not take out at the checkout time, and next user have'
+            'reservation but spot is not available. In such a case'
+            'owner/manager use spot to manage extra vehicle'
         ),
         db_index=True,
         default=PUBLIC)
