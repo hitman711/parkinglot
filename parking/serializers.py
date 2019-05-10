@@ -285,6 +285,8 @@ class ReservationSerializer(ReservationViewSerializer):
         venue = validated_data['venue']
         if validated_data['payment_history']:
             payment = validated_data['payment_history'][0]
+        else:
+            payment = {}
         if validated_data['book_from'] > validated_data['book_to']:
             raise serializers.ValidationError(
                 _('Reservation end time should be'
@@ -311,12 +313,11 @@ class ReservationSerializer(ReservationViewSerializer):
                 _('Venue not available in given time.'
                   'Please select another slot')
             )
-
         if venue.venue_price:
             if (
                 venue.venue_price.pre_paid_amount
             ) and (
-                venue.venue_price.pre_paid_amount < payment['amount']
+                venue.venue_price.pre_paid_amount > payment.get('amount', 0)
             ):
                 raise serializers.ValidationError(
                     _('Pre paid amount not matched')
@@ -362,7 +363,6 @@ class ReservationSerializer(ReservationViewSerializer):
                         validated_data['payment_status'] = models.Reservation.PARTIAL_PAID
                     if payment['amount']:
                         validated_data['total_amount_paid'] = payment['amount']
-
                 instance = super(ReservationSerializer, self).create(
                     validated_data)
                 if payment:

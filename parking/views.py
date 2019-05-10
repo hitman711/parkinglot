@@ -286,6 +286,17 @@ class LotPriceDetail(
         return self.update(request, *args, **kwargs)
 
     @swagger_auto_schema(
+        operation_id="Update venue price detail",
+        tags=['price'],
+        resposes={
+            200: serializer_class
+        }
+    )
+    def patch(self, request, *args, **kwargs):
+        """ API endpoint to update price detail"""
+        return self.partial_update(request, *args, **kwargs)
+
+    @swagger_auto_schema(
         operation_id="Partial update venue price detail",
         tags=['price'],
         resposes={

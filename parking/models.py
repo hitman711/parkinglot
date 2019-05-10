@@ -277,12 +277,12 @@ class Reservation(models.Model):
         verbose_name=_('amount'),
         help_text=_('Reservation amount to be paid'),
         default=0,
-        max_digits=6, decimal_places=2)
+        max_digits=10, decimal_places=2)
     overdue_amount = models.DecimalField(
         default=0,
         verbose_name=_('overdue_amount'),
         help_text=_('Late fee charges to be paid'),
-        max_digits=6, decimal_places=2
+        max_digits=10, decimal_places=2
     )
     payment_status = models.CharField(
         choices=PAYMENT_STATUS, default=PENDING,
@@ -293,12 +293,12 @@ class Reservation(models.Model):
         verbose_name=_('total_amount'),
         help_text=_('Final amount to be paid for reservation'),
         default=0,
-        max_digits=6, decimal_places=2)
+        max_digits=10, decimal_places=2)
     total_amount_paid = models.DecimalField(
         verbose_name=_('total_amount'),
         help_text=_('Final amount to be paid for reservation'),
         default=0,
-        max_digits=6, decimal_places=2)
+        max_digits=10, decimal_places=2)
 
 
 class PaymentHistory(models.Model):
