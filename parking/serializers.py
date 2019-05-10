@@ -122,6 +122,7 @@ class VenueTreeSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Venue
         fields = ('id', 'name', 'category', 'children',
+                    'venue_type',
                   'total_lot', 'available_lot')
         read_only_fields = (
             'children', 'total_lot', 'available_lot')
@@ -160,11 +161,12 @@ class VenueViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Venue
         fields = (
-            'id', 'name', 'category', 'price',
+            'id', 'name', 'category', 'price', 'venue_type',
             'total_lot', 'available_lot', 'location',
             'company_name')
         read_only_fields = (
             'total_lot', 'available_lot', 'location',
+            'venue_type',
             'company_name')
 
 

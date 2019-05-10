@@ -1,5 +1,6 @@
 """ parking app view configuration
 """
+from django.db.models import Q
 from django.shortcuts import render
 from django.utils.translation import gettext as _
 
@@ -493,9 +494,20 @@ class VenueList(
     def custom_query_class(self):
         """ """
         queryset = self.get_queryset()
-        return queryset.filter(
-            category=self.model_class.LOT,
-            venue_type=self.model_class.PUBLIC)
+        if self.request.user.companies.count():
+            return queryset.filter(
+                category=self.model_class.LOT,
+                venue_type=self.model_class.PUBLIC
+            ).filter(
+                Q(
+                    venue_type=type.model_class.PRIVATE,
+                    company__user=self.request.user
+                )
+            )
+        else:
+            return queryset.filter(
+                category=self.model_class.LOT,
+                venue_type=self.model_class.PUBLIC)
 
     @swagger_auto_schema(
         operation_id="Search Venue detail",
