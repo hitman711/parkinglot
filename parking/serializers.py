@@ -1,6 +1,6 @@
 """ """
 import math
-
+from datetime import datetime
 from parkinglot.fields import TimestampField
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
@@ -281,6 +281,22 @@ class ReservationSerializer(ReservationViewSerializer):
     book_to = TimestampField()
     venue = serializers.PrimaryKeyRelatedField(
         queryset=models.Venue.objects.all())
+
+    def validate_book_from(self, value):
+        now = datetime.utcnow()
+        if value < now:
+            raise serializers.ValidationError(
+                _("Start date should not be older than current date")
+            )
+        return value
+    
+    def validate_book_to(self, value):
+        now = datetime.utcnow()
+        if value < now:
+            raise serializers.ValidationError(
+                _("End date should not be older than current date")
+            )
+        return value
 
     def validate(self, validated_data):
         """ """

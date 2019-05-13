@@ -310,7 +310,7 @@ class TestReservationAPI(object):
                 venue_price=price,
                 parent=None)
 
-        book_from = int(timezone.now().strftime('%s'))
+        book_from = int((timezone.now() + relativedelta(minutes=5)).strftime('%s'))
         book_to = int((timezone.now() + relativedelta(hours=2)).strftime('%s'))
 
         json_data = {
@@ -415,7 +415,7 @@ class TestReservationAPI(object):
                 venue_price=price,
                 parent=None)
 
-        book_from = int(timezone.now().strftime('%s'))
+        book_from = int((timezone.now() + relativedelta(minutes=2)).strftime('%s'))
         book_to = int((timezone.now() + relativedelta(hours=2)).strftime('%s'))
 
         json_data = {
