@@ -1,5 +1,5 @@
 # parkinglot
-Parkinglot is a SASS application which allow user to create, manage, maintain and sell parking spaces to the user. Owner can set custom prices based on duration (days, hour), pre paid charges and over due charge.
+Parkinglot is a SAAS application which allow user to create, manage, maintain and sell parking spaces to the user. Owner can set custom prices based on duration (days, hour), pre paid charges and over due charge.
 
 Requirements
 ------------
